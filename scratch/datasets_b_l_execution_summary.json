@@ -1,0 +1,87 @@
+{
+  "baselineHash": "2221B9DAA3442A124804CEC4FB0102AC1947A569928F59B1E1FBB8CBCF6308A2",
+  "datasets": {
+    "Dataset-B": "PASS",
+    "Dataset-C": "PASS",
+    "Dataset-D": "PASS",
+    "Dataset-E": "PASS",
+    "Dataset-F": "PASS",
+    "Dataset-G": "PASS",
+    "Dataset-H": "PASS",
+    "Dataset-I": "PASS",
+    "Dataset-J": "PASS",
+    "Dataset-K": "PASS",
+    "Dataset-L": "PASS"
+  },
+  "metrics": {
+    "Dataset-B": {
+      "durationMs": 0,
+      "batchId": "3f22dea6-29a3-45d7-8234-e1813b32282a",
+      "sourceRows": 2,
+      "committed": 2
+    },
+    "Dataset-C": {
+      "durationMs": 0,
+      "batchId": "f28e06bc-4096-4be6-a134-30b3fe95f797",
+      "sourceRows": 2,
+      "invalidRows": 2,
+      "rejectedByGate": true
+    },
+    "Dataset-D": {
+      "durationMs": 1,
+      "batchId": "3d4d08c9-b9f0-4d75-997a-df186a45c653",
+      "sourceRows": 3,
+      "validCommitted": 2
+    },
+    "Dataset-E": {
+      "durationMs": 0,
+      "batchId": "63d55bff-3107-4a65-990a-465278affb1f",
+      "sourceRows": 2,
+      "committed": 2
+    },
+    "Dataset-F": {
+      "durationMs": 0,
+      "batchId": "a28478ed-2336-48e0-bb8b-e9f5891bb4ca",
+      "uatFinancialTotal": 8500,
+      "prodFinancialMutation": 0
+    },
+    "Dataset-G": {
+      "durationMs": 0,
+      "batchId": "5087d703-cfc6-4a33-bf1b-93b532087f49",
+      "lineageCount": 1
+    },
+    "Dataset-H": {
+      "durationMs": 2,
+      "batchH1Id": "b6678b8e-2b1e-46fd-9e69-4be1818bc1fa",
+      "batchH2Id": "b3d7869a-d5e6-451c-ad60-e674cc64a815",
+      "preCommitRollback": "PASS",
+      "postCommitReversed": 1
+    },
+    "Dataset-I": {
+      "durationMs": 0,
+      "batchId": "69d8d0a3-5419-40e3-a442-63308250cc17",
+      "tenantMismatchBlocked": true
+    },
+    "Dataset-J": {
+      "durationMs": 1,
+      "batchId": "85a3c3df-67c3-4a4b-8cd7-91a51233e4cf",
+      "boundHash": "sha256-dataset-j-hash-bound",
+      "immutabilityEnforced": true
+    },
+    "Dataset-K": {
+      "durationMs": 0,
+      "batchId": "d9910662-87e1-425c-93d4-f62e80a1374b",
+      "doubleSubmitBlocked": true
+    },
+    "Dataset-L": {
+      "durationMs": 0,
+      "batchId": "df5eaf8d-f618-497c-bf2b-65a05f298249",
+      "sourceRows": 2,
+      "committed": 2
+    }
+  },
+  "primaryProdMutation": 0,
+  "primaryProdFinancialMutation": 0,
+  "crossSocietyAccess": "DENIED",
+  "overallClassification": "A — ALL DATASETS B-L UAT PASS / CANDIDATE-30 UAT COMPLETE"
+}

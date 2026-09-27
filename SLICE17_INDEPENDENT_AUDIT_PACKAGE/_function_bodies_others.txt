@@ -1,0 +1,316 @@
+﻿Tuples only is on.
+Output format is unaligned.
+---FUNC:close_community_poll(p_poll_id uuid)---|CREATE OR REPLACE FUNCTION public.close_community_poll(p_poll_id uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+    v_caller UUID := auth.uid();
+    v_poll RECORD;
+BEGIN
+    IF v_caller IS NULL THEN
+        RAISE EXCEPTION 'Authentication required.' USING ERRCODE = '42501';
+    END IF;
+
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'Access Denied: Only admin can close polls.' USING ERRCODE = '42501';
+    END IF;
+
+    SELECT * INTO v_poll FROM public.polls WHERE id = p_poll_id FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Poll not found.' USING ERRCODE = '22000';
+    END IF;
+
+    IF public.get_user_society_id(v_caller) IS DISTINCT FROM v_poll.society_id THEN
+        RAISE EXCEPTION 'Cross-society execution denied.' USING ERRCODE = '42501';
+    END IF;
+
+    IF NOW() < v_poll.ends_at THEN
+        RAISE EXCEPTION 'Cannot close poll before ends_at time.' USING ERRCODE = '22000';
+    END IF;
+
+    UPDATE public.polls SET status = 'closed' WHERE id = p_poll_id;
+END;
+$function$
+
+---FUNC:create_community_poll(p_society_id uuid, p_title character varying, p_description text, p_options jsonb, p_starts_at timestamp with time zone, p_ends_at timestamp with time zone)---|CREATE OR REPLACE FUNCTION public.create_community_poll(p_society_id uuid, p_title character varying, p_description text, p_options jsonb, p_starts_at timestamp with time zone, p_ends_at timestamp with time zone)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+    v_caller UUID := auth.uid();
+    v_poll_id UUID;
+    v_status VARCHAR := 'draft';
+BEGIN
+    IF v_caller IS NULL THEN
+        RAISE EXCEPTION 'Authentication required.' USING ERRCODE = '42501';
+    END IF;
+
+    IF public.get_user_society_id(v_caller) IS DISTINCT FROM p_society_id THEN
+        RAISE EXCEPTION 'Cross-society execution denied.' USING ERRCODE = '42501';
+    END IF;
+
+    IF NOT public.is_admin() AND NOT EXISTS (
+        SELECT 1 FROM public.user_roles WHERE society_id = p_society_id AND user_id = v_caller AND role_name IN ('committee_member', 'secretary', 'treasurer')
+    ) THEN
+        RAISE EXCEPTION 'Access Denied: Only admin or committee member can create polls.' USING ERRCODE = '42501';
+    END IF;
+
+    IF NOT public.fn_validate_poll_options(p_options) THEN
+        RAISE EXCEPTION 'Invalid poll options format or duplicates.' USING ERRCODE = '23514';
+    END IF;
+
+    IF p_starts_at >= p_ends_at THEN
+        RAISE EXCEPTION 'starts_at must be before ends_at.' USING ERRCODE = '22000';
+    END IF;
+
+    IF NOW() >= p_starts_at THEN
+        v_status := 'active';
+    END IF;
+
+    INSERT INTO public.polls (
+        society_id, title, description, options, starts_at, ends_at, status, created_by
+    ) VALUES (
+        p_society_id, p_title, p_description, p_options, p_starts_at, p_ends_at, v_status, v_caller
+    ) RETURNING id INTO v_poll_id;
+
+    RETURN v_poll_id;
+END;
+$function$
+
+---FUNC:fn_validate_poll_options(p_options jsonb)---|CREATE OR REPLACE FUNCTION public.fn_validate_poll_options(p_options jsonb)
+ RETURNS boolean
+ LANGUAGE plpgsql
+ IMMUTABLE
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+    v_len INT;
+    v_i INT;
+    v_elem JSONB;
+    v_text TEXT;
+    v_norm TEXT;
+    v_seen TEXT[] := '{}';
+BEGIN
+    IF p_options IS NULL OR jsonb_typeof(p_options) != 'array' THEN
+        RETURN FALSE;
+    END IF;
+
+    v_len := jsonb_array_length(p_options);
+    IF v_len < 2 THEN
+        RETURN FALSE;
+    END IF;
+
+    FOR v_i IN 0 .. (v_len - 1) LOOP
+        v_elem := p_options -> v_i;
+        IF jsonb_typeof(v_elem) != 'string' THEN
+            RETURN FALSE;
+        END IF;
+
+        v_text := TRIM(v_elem #>> '{}');
+        IF v_text IS NULL OR LENGTH(v_text) = 0 THEN
+            RETURN FALSE;
+        END IF;
+
+        v_norm := LOWER(v_text);
+        IF v_norm = ANY(v_seen) THEN
+            RETURN FALSE; -- Duplicate option detected (case/whitespace invariant)
+        END IF;
+
+        v_seen := array_append(v_seen, v_norm);
+    END LOOP;
+
+    RETURN TRUE;
+END;
+$function$
+
+---FUNC:get_poll_results(p_poll_id uuid)---|CREATE OR REPLACE FUNCTION public.get_poll_results(p_poll_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+    v_caller UUID := auth.uid();
+    v_poll RECORD;
+    v_is_admin BOOLEAN := FALSE;
+    v_total_votes INT := 0;
+    v_results JSONB := '[]'::jsonb;
+    v_opt JSONB;
+    v_opt_text TEXT;
+    v_count INT;
+    v_pct NUMERIC(5,2);
+BEGIN
+    IF v_caller IS NULL THEN
+        RAISE EXCEPTION 'Authentication required.' USING ERRCODE = '42501';
+    END IF;
+
+    SELECT * INTO v_poll FROM public.polls WHERE id = p_poll_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Poll not found.' USING ERRCODE = '22000';
+    END IF;
+
+    IF public.get_user_society_id(v_caller) IS DISTINCT FROM v_poll.society_id THEN
+        RAISE EXCEPTION 'Cross-society execution denied.' USING ERRCODE = '42501';
+    END IF;
+
+    v_is_admin := public.is_admin();
+
+    -- Active poll confidentiality rule: non-admin member queries rejected
+    IF v_poll.status IS DISTINCT FROM 'closed' AND NOW() < v_poll.ends_at AND NOT v_is_admin THEN
+        RAISE EXCEPTION 'Access Denied: Results for active polls are confidential.' USING ERRCODE = '22000';
+    END IF;
+
+    SELECT COUNT(*) INTO v_total_votes FROM public.poll_votes WHERE poll_id = p_poll_id;
+
+    FOR v_opt IN SELECT * FROM jsonb_array_elements(v_poll.options) LOOP
+        v_opt_text := TRIM(v_opt #>> '{}');
+        
+        SELECT COUNT(*) INTO v_count 
+        FROM public.poll_votes 
+        WHERE poll_id = p_poll_id AND LOWER(TRIM(vote_choice)) = LOWER(v_opt_text);
+
+        IF v_total_votes > 0 THEN
+            v_pct := ROUND((v_count::NUMERIC / v_total_votes::NUMERIC) * 100.0, 2);
+        ELSE
+            v_pct := 0.00;
+        END IF;
+
+        v_results := v_results || jsonb_build_object(
+            'option', v_opt_text,
+            'votes', v_count,
+            'percentage', v_pct
+        );
+    END LOOP;
+
+    RETURN jsonb_build_object(
+        'poll_id', p_poll_id,
+        'title', v_poll.title,
+        'status', v_poll.status,
+        'total_votes', v_total_votes,
+        'results', v_results
+    );
+END;
+$function$
+
+---FUNC:trg_prevent_direct_gate_pass_update_func()---|CREATE OR REPLACE FUNCTION public.trg_prevent_direct_gate_pass_update_func()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+    IF current_setting('app.workflow_context', true) IS DISTINCT FROM 'gate_pass_transition' AND auth.role() IS DISTINCT FROM 'service_role' THEN
+        RAISE EXCEPTION 'Direct update on gate_passes status blocked. Use workflow procedures.' USING ERRCODE = '42501';
+    END IF;
+    RETURN NEW;
+END;
+$function$
+
+---FUNC:trg_prevent_direct_meter_reading_update_func()---|CREATE OR REPLACE FUNCTION public.trg_prevent_direct_meter_reading_update_func()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+    IF current_setting('app.workflow_context', true) IS DISTINCT FROM 'meter_reading_transition' AND auth.role() IS DISTINCT FROM 'service_role' THEN
+        RAISE EXCEPTION 'Direct update on meter_readings status blocked. Use workflow procedures.' USING ERRCODE = '42501';
+    END IF;
+    RETURN NEW;
+END;
+$function$
+
+---FUNC:trg_prevent_direct_parcel_update_func()---|CREATE OR REPLACE FUNCTION public.trg_prevent_direct_parcel_update_func()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+    IF current_setting('app.workflow_context', true) IS DISTINCT FROM 'parcel_transition' 
+       AND current_setting('app.parcel_transition', true) IS DISTINCT FROM NEW.id::text 
+       AND auth.role() IS DISTINCT FROM 'service_role' THEN
+        RAISE EXCEPTION 'Direct update on parcel_logs status blocked. Use workflow procedures.' USING ERRCODE = '42501';
+    END IF;
+    RETURN NEW;
+END;
+$function$
+
+---FUNC:trg_prevent_vote_mutations_func()---|CREATE OR REPLACE FUNCTION public.trg_prevent_vote_mutations_func()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+    RAISE EXCEPTION 'Direct mutation of poll_votes is prohibited.' USING ERRCODE = '42501';
+END;
+$function$
+
+---FUNC:trg_protect_sos_status_update_func()---|CREATE OR REPLACE FUNCTION public.trg_protect_sos_status_update_func()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+    IF current_setting('app.workflow_context', true) IS DISTINCT FROM 'sos_transition' AND auth.role() IS DISTINCT FROM 'service_role' THEN
+        RAISE EXCEPTION 'Direct update on sos_alerts blocked. Use workflow procedures.' USING ERRCODE = '42501';
+    END IF;
+    RETURN NEW;
+END;
+$function$
+
+---FUNC:trg_validate_poll_transitions()---|CREATE OR REPLACE FUNCTION public.trg_validate_poll_transitions()
+ RETURNS trigger
+ LANGUAGE plpgsql
+AS $function$
+BEGIN
+    IF TG_OP = 'DELETE' THEN
+        IF OLD.status != 'draft' THEN
+            RAISE EXCEPTION 'Only draft polls can be deleted';
+        END IF;
+        RETURN OLD;
+    END IF;
+
+    IF OLD.status != NEW.status THEN
+        IF OLD.status = 'draft' AND NEW.status != 'active' THEN
+            RAISE EXCEPTION 'Draft poll can only transition to active';
+        END IF;
+        IF OLD.status = 'active' AND NEW.status != 'closed' THEN
+            RAISE EXCEPTION 'Active poll can only transition to closed';
+        END IF;
+        IF OLD.status = 'closed' THEN
+            RAISE EXCEPTION 'Closed polls cannot change status';
+        END IF;
+    END IF;
+    
+    IF OLD.status != 'draft' AND (OLD.title != NEW.title OR OLD.description != NEW.description) THEN
+        RAISE EXCEPTION 'Poll configuration is immutable once no longer in draft';
+    END IF;
+    
+    RETURN NEW;
+END;
+$function$
+
+---FUNC:trg_vehicles_auto_release_parking_func()---|CREATE OR REPLACE FUNCTION public.trg_vehicles_auto_release_parking_func()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+BEGIN
+    -- Unlink assigned_vehicle_id from parking_slots while preserving permanent property_id
+    UPDATE public.parking_slots 
+    SET assigned_vehicle_id = NULL
+    WHERE assigned_vehicle_id = OLD.id;
+
+    RETURN OLD;
+END;
+$function$
+

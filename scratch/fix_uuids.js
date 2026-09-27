@@ -1,0 +1,13 @@
+const fs = require('fs');
+const path = require('path');
+const file = path.join(__dirname, 'create_verify_slice4.js');
+let content = fs.readFileSync(file, 'utf8');
+content = content.replace(/'p100/g, "'d100");
+content = content.replace(/'v100/g, "'d200");
+content = content.replace(/'r100/g, "'d300");
+content = content.replace(/'t100/g, "'d400");
+content = content.replace(/'m100/g, "'d500");
+content = content.replace(/'c100/g, "'d600");
+content = content.replace(/'e100/g, "'d700");
+fs.writeFileSync(file, content);
+console.log('Fixed UUIDs in create_verify_slice4.js');

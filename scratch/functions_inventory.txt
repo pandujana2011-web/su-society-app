@@ -1,0 +1,287 @@
+
+
+--- FILE: schema_slice1.sql ---
+CREATE OR REPLACE FUNCTION public.set_updated_at()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.is_admin(
+    uid UUID DEFAULT auth.uid()
+)
+RETURNS BOOLEAN
+
+CREATE OR REPLACE FUNCTION public.has_role(
+    uid       UUID,
+    p_role    TEXT
+)
+RETURNS BOOLEAN
+
+CREATE OR REPLACE FUNCTION public.get_user_society_id(
+    uid UUID DEFAULT auth.uid()
+)
+RETURNS UUID
+
+CREATE OR REPLACE FUNCTION public.is_property_owner(
+    uid          UUID,
+    property_uuid UUID
+)
+RETURNS BOOLEAN
+
+CREATE OR REPLACE FUNCTION public.is_property_tenant(
+    uid           UUID,
+    property_uuid UUID
+)
+RETURNS BOOLEAN
+
+CREATE OR REPLACE FUNCTION public.prevent_audit_log_mutations()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.validate_ownership_share_total()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.validate_single_primary_owner()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.prevent_role_name_update()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.validate_tenancy_unit_property_match()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.validate_role_revocation()
+RETURNS TRIGGER
+
+
+
+--- FILE: schema_slice2.sql ---
+CREATE OR REPLACE FUNCTION public.trg_validate_ledger_consistency()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.trg_block_update_delete()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.fn_generate_charge(
+    p_property_id UUID,
+    p_unit_id UUID,
+    p_policy_id UUID,
+    p_billing_period VARCHAR
+)
+RETURNS UUID
+
+CREATE OR REPLACE FUNCTION public.fn_process_payment(
+    p_payment_id UUID,
+    p_action VARCHAR, -- 'verified', 'rejected'
+    p_reason TEXT DEFAULT NULL
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_reverse_charge(
+    p_charge_id UUID,
+    p_reason TEXT
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_reverse_payment(
+    p_payment_id UUID,
+    p_reversal_reason VARCHAR -- 'cheque_bounced', 'bank_chargeback', 'duplicate_payment'
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_post_expense(
+    p_society_id UUID,
+    p_amount NUMERIC,
+    p_category VARCHAR,
+    p_description TEXT
+)
+RETURNS UUID
+
+CREATE OR REPLACE FUNCTION public.fn_reverse_expense(
+    p_expense_id UUID,
+    p_reason TEXT
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_get_property_outstanding_balance(p_property_id UUID)
+RETURNS NUMERIC
+
+
+
+--- FILE: schema_slice3.sql ---
+CREATE OR REPLACE FUNCTION public.trg_validate_ledger_consistency()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.fn_create_amenity_booking(
+    p_amenity_id UUID,
+    p_property_id UUID,
+    p_unit_id UUID,
+    p_start_time TIMESTAMPTZ,
+    p_end_time TIMESTAMPTZ
+)
+RETURNS UUID
+
+CREATE OR REPLACE FUNCTION public.fn_process_booking_action(
+    p_booking_id UUID,
+    p_action VARCHAR -- 'approve', 'reject', 'cancel', 'complete'
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_transition_ticket_state(
+    p_ticket_id UUID,
+    p_new_state VARCHAR
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_visitor_check_in(
+    p_society_id UUID,
+    p_pre_auth_code VARCHAR DEFAULT NULL,
+    p_property_id UUID DEFAULT NULL,
+    p_visitor_name VARCHAR DEFAULT NULL,
+    p_purpose VARCHAR DEFAULT NULL
+)
+RETURNS UUID
+
+CREATE OR REPLACE FUNCTION public.fn_visitor_check_out(
+    p_visitor_id UUID
+)
+RETURNS VOID
+
+
+
+--- FILE: schema_slice4.sql ---
+CREATE OR REPLACE FUNCTION public.trg_validate_ledger_consistency()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.fn_verify_payment_with_allocation(
+    p_payment_id UUID,
+    p_allocations JSONB -- Array of { "charge_id": "uuid", "amount": number }
+)
+RETURNS UUID
+
+CREATE OR REPLACE FUNCTION public.fn_transition_voucher_state(
+    p_voucher_id UUID,
+    p_new_state VARCHAR,
+    p_reason TEXT DEFAULT NULL
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_reconcile_transactions(
+    p_reconciliation_id UUID,
+    p_ledger_transaction_ids UUID[]
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_complete_reconciliation(
+    p_reconciliation_id UUID
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_book_opening_balance(
+    p_property_id UUID,
+    p_user_id UUID,
+    p_amount NUMERIC,
+    p_direction VARCHAR,
+    p_as_of_date DATE
+)
+RETURNS UUID
+
+CREATE OR REPLACE FUNCTION public.trg_block_ob_update_delete()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.trg_block_completed_reconciliation()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.trg_block_matched_tx_delete()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.trg_validate_ledger_consistency()
+RETURNS TRIGGER
+
+
+
+--- FILE: schema_slice5.sql ---
+CREATE OR REPLACE FUNCTION public.trg_validate_poll_transitions()
+
+CREATE OR REPLACE FUNCTION public.prevent_vote_mutation()
+
+CREATE OR REPLACE FUNCTION public.fn_cast_poll_vote(
+    p_poll_id UUID,
+    p_property_id UUID,
+    p_vote_choice VARCHAR
+)
+RETURNS UUID
+SECURITY DEFINER
+SET search_path = ''
+
+CREATE OR REPLACE FUNCTION public.fn_assign_parking_slot(
+    p_vehicle_id UUID,
+    p_slot_id UUID
+)
+RETURNS BOOLEAN
+SECURITY DEFINER
+SET search_path = ''
+
+
+
+--- FILE: schema_slice6.sql ---
+CREATE OR REPLACE FUNCTION public.fn_gate_passes_force_requested_by()
+
+CREATE OR REPLACE FUNCTION public.fn_transition_daily_staff_verification(
+    p_staff_id UUID,
+    p_new_status VARCHAR
+) RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_transition_gate_pass_state(
+    p_pass_id UUID,
+    p_new_status VARCHAR
+) RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.fn_audit_trigger_func()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.fn_transition_ticket_state(
+    p_ticket_id UUID,
+    p_new_state VARCHAR
+)
+RETURNS VOID
+
+
+
+--- FILE: schema_slice7.sql ---
+CREATE OR REPLACE FUNCTION public.fn_transition_vendor_status(
+    p_vendor_id UUID,
+    p_new_status VARCHAR
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.trg_prevent_direct_vendor_status_update()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.fn_audit_vendor_bank_metadata()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.trg_validate_bank_details_society()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.fn_transition_asset_status(
+    p_asset_id UUID,
+    p_new_status VARCHAR
+)
+RETURNS VOID
+
+CREATE OR REPLACE FUNCTION public.trg_prevent_direct_asset_status_update()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.trg_validate_amc_isolation()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.trg_validate_voucher_vendor_isolation()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.trg_validate_ticket_asset_isolation()
+RETURNS TRIGGER
+
+CREATE OR REPLACE FUNCTION public.fn_assign_ticket_asset(
+    p_ticket_id UUID,
+    p_asset_id UUID
+)
+RETURNS VOID
+

@@ -1,0 +1,231 @@
+=========================================
+PHASE A: Executing Slice 1-13 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-12 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-11 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-10 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-9 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-8 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-7 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-6 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-5 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-4 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-3 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1-2 Regression Pipeline
+=========================================
+=========================================
+PHASE A: Executing Slice 1 Schema & Verification
+=========================================
+NOTICE:  Slice 1 Verification Complete: 97/97 PASS
+=========================================
+PHASE D: Final Report
+=========================================
+Slice 1 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 2 Schema & Verification
+=========================================
+NOTICE:  Slice 2 Verification Complete: 34/34 PASS
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 97/97 PASS
+Slice 2 Assertions: 34/34 PASS
+Combined Result: 131/131 PASS
+Slice 2 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 3 Schema & Verification
+=========================================
+NOTICE:  Slice 3 Verification Complete: 19/19 PASS
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 131/131 PASS
+Slice 3 Assertions: 19/19 PASS
+Combined Result: 150/150 PASS
+Slice 3 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 4 Schema & Verification
+=========================================
+NOTICE:  --- SLICE 4 TESTS PASSED ---
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 150/150 PASS
+Slice 4 Assertions: 26/26 PASS
+Combined Result: 176/176 PASS
+Slice 4 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 5 Schema & Verification
+=========================================
+NOTICE:  --- SLICE 5 TESTS PASSED ---
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 176/176 PASS
+Slice 5 Assertions: 26/26 PASS
+Combined Result: 202/202 PASS
+Slice 5 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 6 Schema & Verification
+=========================================
+NOTICE:  --- SLICE 6 TESTS PASSED ---
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 202/202 PASS
+Slice 6 Assertions: 20/20 PASS
+Combined Result: 222/222 PASS
+Slice 6 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 7 Schema & Verification
+=========================================
+NOTICE:  --- SLICE 7 TESTS PASSED ---
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 222/222 PASS
+Slice 7 Assertions: 18/18 PASS
+Combined Result: 240/240 PASS
+Slice 7 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 8 Schema & Verification
+=========================================
+NOTICE:  SLICE 8 VERIFICATION COMPLETE: ALL 23 TESTS PASSED
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 240/240 PASS
+Slice 8 Assertions: 23/23 PASS
+Combined Result: 263/263 PASS
+Slice 8 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 9 Schema & Verification
+=========================================
+NOTICE:  SLICE 9 VERIFICATION COMPLETE (ALL 14 TESTS PASS)
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 263/263 PASS
+Slice 9 Assertions: 14/14 PASS
+Combined Result: 277/277 PASS
+Slice 9 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 10 Schema & Verification
+=========================================
+NOTICE:  SLICE 10 VERIFICATION COMPLETE (ALL 15 TESTS PASS)
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 277/277 PASS
+Slice 10 Assertions: 15/15 PASS
+Combined Result: 292/292 PASS
+Slice 10 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 11 Schema & Verification
+=========================================
+NOTICE:  SLICE 11 VERIFICATION COMPLETE (ALL TESTS PASS)
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 292/292 PASS
+Slice 11 Assertions: 17/17 PASS
+Combined Result: 309/309 PASS
+Slice 11 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 12 Schema & Verification
+=========================================
+NOTICE:  SLICE 12 VERIFICATION COMPLETE (ALL 16 TESTS PASS)
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 309/309 PASS
+Slice 12 Assertions: 16/16 PASS
+Combined Result: 325/325 PASS
+Slice 12 Verification Completed Successfully.
+=========================================
+PHASE B: Executing Slice 13 Schema & Verification
+=========================================
+NOTICE:  SLICE 13 VERIFICATION COMPLETE: 16/16 TESTS PASSED
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 325/325 PASS
+Slice 13 Assertions: 16/16 PASS
+Combined Result: 341/341 PASS
+Slice 13 Verification Completed Successfully.
+
+=========================================
+PHASE B: Executing Slice 14 Schema
+=========================================
+COMMIT
+
+=========================================
+PHASE C: Executing Slice 14 Verification
+=========================================
+NOTICE:  ==================================================
+NOTICE:  STARTING SLICE 14 VERIFICATION (PAYMENT WEBHOOKS)
+NOTICE:  ==================================================
+NOTICE:  PASS: 1. Payment intent creation successful
+NOTICE:  PASS: 2. Intent RLS user isolation strictly enforced
+NOTICE:  PASS: 3. Intent RLS society isolation strictly enforced
+NOTICE:  PASS: 4. Direct status update correctly blocked by trigger
+NOTICE:  PASS: 5. Invalid state transition correctly rejected
+NOTICE:  PASS: 6. _internal_settle_payment non-PUBLIC privilege catalog check verified
+NOTICE:  PASS: 7. process_verified_webhook restricted from authenticated users
+NOTICE:  PASS: 8. Amount mismatch correctly rejected by process_verified_webhook
+NOTICE:  PASS: 9. Payment intent transitioned to failed status on amount mismatch
+NOTICE:  PASS: 10. Duplicate webhook retry handled idempotently without error
+NOTICE:  PASS: 11. Conflicting duplicate webhook payload correctly rejected
+NOTICE:  PASS: 12. Valid webhook settlement execution completed successfully
+NOTICE:  PASS: 13. Exactly one payment verified with SYSTEM actor (verified_by IS NULL)
+NOTICE:  PASS: 14. Exactly one property subsidiary ledger credit verified (Amount: 2000.00)
+NOTICE:  PASS: 15. Exactly one society cash/bank ledger debit verified (Amount: 2000.00)
+NOTICE:  PASS: 16. Exactly one receipt generated for settlement
+NOTICE:  PASS: 17. Exactly one notification delivered to payer
+NOTICE:  PASS: 18. Audit trail correctly logged with SYSTEM actor (actor_id IS NULL)
+NOTICE:  PASS: 19. Webhook retry on settled intent returned success idempotently without duplicate receipt
+NOTICE:  PASS: 20. payment_webhooks UPDATE correctly blocked by immutability trigger
+NOTICE:  PASS: 21. Admin isolation enforced on fn_verify_payment_with_allocation
+NOTICE:  PASS: 22. Allocation boundary check (charge balance limit) verified
+NOTICE:  PASS: 23. Non-positive allocation amount correctly rejected
+NOTICE:  PASS: 24. Cross-society charge allocation correctly blocked
+NOTICE:  PASS: 25. Payer active relationship check strictly enforced
+NOTICE:  PASS: 26. Financial atomicity verified (zero side effects committed on failure)
+NOTICE:  PASS: 27. Valid INR currency settlement completed successfully with receipt
+NOTICE:  PASS: 28. USD currency mismatch correctly rejected (intent failed, 0 side-effects)
+NOTICE:  PASS: 29. Missing provider currency correctly rejected with intent failed
+NOTICE:  PASS: 30. Internal intent vs payment currency mismatch correctly rejected
+NOTICE:  PASS: 31. Case-normalized currency matching (inr vs InR vs INR) verified
+NOTICE:  ==================================================
+NOTICE:  SLICE 14 VERIFICATION COMPLETE (31/31 TESTS PASSED)
+NOTICE:  ==================================================
+DO
+
+=========================================
+PHASE D: Final Report
+=========================================
+Locked Baseline: 341/341 PASS
+Slice 14 Assertions: 31/31 PASS
+Combined Result: 372/372 PASS
+Slice 14 Verification Completed Successfully.

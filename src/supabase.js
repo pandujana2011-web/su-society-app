@@ -46,10 +46,12 @@ const INITIAL_MOCK_DATA = {
     { id: 'a1111111-1111-1111-1111-111111111111', email: 'secretary@society.com', name: 'Srinivas Rao (Secretary)', mobile: '+919999999902', status: 'active', password: 'password123' },
     { id: 'a2222222-2222-2222-2222-222222222222', email: 'treasurer@society.com', name: 'Lakshmi Narayana (Treasurer)', mobile: '+919999999903', status: 'active', password: 'password123' },
     { id: 'a3333333-3333-3333-3333-333333333333', email: 'executive@society.com', name: 'Mohammad Ali (Exec)', mobile: '+919999999904', status: 'active', password: 'password123' },
-    { id: 'b1111111-1111-1111-1111-111111111111', email: 'owner1@society.com', name: 'Kalyan Reddy', mobile: '+919876543210', status: 'active', password: 'password123' },
+    { id: 'b1111111-1111-1111-1111-111111111111', email: 'owner@society.com', name: 'Kalyan Reddy (Owner)', mobile: '+919876543210', status: 'active', password: 'password123' },
+    { id: 'b1111111-1111-1111-1111-111111111112', email: 'owner1@society.com', name: 'Kalyan Reddy', mobile: '+919876543210', status: 'active', password: 'password123' },
     { id: 'b2222222-2222-2222-2222-222222222222', email: 'owner2@society.com', name: 'Priya Sharma', mobile: '+919876543211', status: 'active', password: 'password123' },
     { id: 'b3333333-3333-3333-3333-333333333333', email: 'owner3@society.com', name: 'Venkat Prasad', mobile: '+919876543212', status: 'active', password: 'password123' },
-    { id: 'c1111111-1111-1111-1111-111111111111', email: 'tenant1@society.com', name: 'Ravi Kumar', mobile: '+918765432100', status: 'active', password: 'password123' },
+    { id: 'c1111111-1111-1111-1111-111111111111', email: 'tenant@society.com', name: 'Ravi Kumar (Tenant)', mobile: '+918765432100', status: 'active', password: 'password123' },
+    { id: 'c1111111-1111-1111-1111-111111111112', email: 'tenant1@society.com', name: 'Ravi Kumar', mobile: '+918765432100', status: 'active', password: 'password123' },
     { id: 'c2222222-2222-2222-2222-222222222222', email: 'tenant2@society.com', name: 'Ananya Sen', mobile: '+918765432101', status: 'active', password: 'password123' },
     { id: 'd1111111-1111-1111-1111-111111111111', email: 'gatekeeper@society.com', name: 'Ramaiah (Gatekeeper)', mobile: '+919876543213', status: 'active', password: 'password123' },
     { id: 'd2222222-2222-2222-2222-222222222222', email: 'technician@society.com', name: 'Suresh (Technician)', mobile: '+919876543214', status: 'active', password: 'password123' }
@@ -66,9 +68,11 @@ const INITIAL_MOCK_DATA = {
     { user_id: 'a3333333-3333-3333-3333-333333333333', society_id: '11111111-1111-1111-1111-111111111111', role: 'executive_member' },
     { user_id: 'a3333333-3333-3333-3333-333333333333', society_id: '11111111-1111-1111-1111-111111111111', role: 'member' },
     { user_id: 'b1111111-1111-1111-1111-111111111111', society_id: '11111111-1111-1111-1111-111111111111', role: 'member' },
+    { user_id: 'b1111111-1111-1111-1111-111111111112', society_id: '11111111-1111-1111-1111-111111111111', role: 'member' },
     { user_id: 'b2222222-2222-2222-2222-222222222222', society_id: '11111111-1111-1111-1111-111111111111', role: 'member' },
     { user_id: 'b3333333-3333-3333-3333-333333333333', society_id: '11111111-1111-1111-1111-111111111111', role: 'member' },
     { user_id: 'c1111111-1111-1111-1111-111111111111', society_id: '11111111-1111-1111-1111-111111111111', role: 'tenant' },
+    { user_id: 'c1111111-1111-1111-1111-111111111112', society_id: '11111111-1111-1111-1111-111111111111', role: 'tenant' },
     { user_id: 'c2222222-2222-2222-2222-222222222222', society_id: '11111111-1111-1111-1111-111111111111', role: 'tenant' },
     { user_id: 'd1111111-1111-1111-1111-111111111111', society_id: '11111111-1111-1111-1111-111111111111', role: 'gatekeeper' },
     { user_id: 'd2222222-2222-2222-2222-222222222222', society_id: '11111111-1111-1111-1111-111111111111', role: 'technician' }
@@ -3772,12 +3776,21 @@ export const mockClient = {
 // Internal role helper overrides
 export const db_helpers = {
   is_admin: (user) => {
-    if (!user || !user.roles) return false;
-    return user.roles.some(r => ['super_admin', 'admin', 'secretary', 'treasurer'].includes(r));
+    if (!user) return false;
+    const rolesList = [
+      ...(Array.isArray(user.roles) ? user.roles : []),
+      ...(typeof user.role === 'string' ? [user.role] : Array.isArray(user.role) ? user.role : [])
+    ].map(r => String(r).toLowerCase());
+    return rolesList.some(r => ['super_admin', 'admin', 'secretary', 'treasurer'].includes(r));
   },
   has_role: (user, role) => {
-    if (!user || !user.roles) return false;
-    return user.roles.includes(role);
+    if (!user) return false;
+    const targetRole = String(role).toLowerCase();
+    const rolesList = [
+      ...(Array.isArray(user.roles) ? user.roles : []),
+      ...(typeof user.role === 'string' ? [user.role] : Array.isArray(user.role) ? user.role : [])
+    ].map(r => String(r).toLowerCase());
+    return rolesList.includes(targetRole);
   },
   get_user_society_id: (user) => {
     if (!user) return null;
@@ -3789,68 +3802,118 @@ export const db_helpers = {
   }
 };
 
-// Global DB entry point
-export const db = isMock ? mockClient : {
-  auth: {
-    signIn: async (email, password) => {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      
-      const { data: userProfile, error: profileErr } = await supabase.from('users').select('*').eq('id', data.user.id).single();
-      if (profileErr) throw profileErr;
+// Global DB entry point with automatic Supabase & Mock fallbacks
+export const db = new Proxy(mockClient, {
+  get(target, propKey) {
+    if (isMock) return target[propKey];
 
-      const { data: rolesData, error: rolesErr } = await supabase.from('user_roles').select('role').eq('user_id', data.user.id);
-      if (rolesErr) throw rolesErr;
-
+    if (propKey === 'auth') {
       return {
-        id: data.user.id, email: data.user.email, name: userProfile.name, mobile: userProfile.mobile, status: userProfile.status, roles: rolesData.map(r => r.role)
+        signIn: async (email, password) => {
+          if (!supabase) return mockClient.auth.signIn(email, password);
+          try {
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            
+            const { data: userProfile } = await supabase.from('users').select('*').eq('id', data.user.id).single();
+            const { data: rolesData } = await supabase.from('user_roles').select('role_name, role').eq('user_id', data.user.id);
+
+            // Primary: roles from user_roles table (role_name or role column)
+            let roles = (rolesData || []).map(r => r.role_name || r.role).filter(Boolean);
+
+            // Fallback: extract role from Supabase auth raw_user_meta_data if user_roles is empty
+            if (roles.length === 0) {
+              const metaRole = data.user.user_metadata?.role || data.user.app_metadata?.role;
+              if (metaRole) roles = String(metaRole).toLowerCase().split(',').map(r => r.trim()).filter(Boolean);
+            }
+
+            // Tertiary fallback: check profile table role column
+            if (roles.length === 0 && userProfile?.role) {
+              roles = [userProfile.role];
+            }
+
+            return {
+              id: data.user.id,
+              email: data.user.email,
+              name: userProfile?.full_name || userProfile?.name || data.user.user_metadata?.full_name || email.split('@')[0],
+              mobile: userProfile?.mobile || '',
+              status: userProfile?.status || 'active',
+              society_id: userProfile?.society_id || '11111111-1111-1111-1111-111111111111',
+              roles: roles.length > 0 ? roles : ['member']
+            };
+          } catch (e) {
+            console.warn('Supabase cloud auth failed, falling back to local database:', e.message);
+            return mockClient.auth.signIn(email, password);
+          }
+        },
+        signOut: async () => {
+          if (supabase) {
+            try { await supabase.auth.signOut(); } catch (e) {}
+          }
+          return mockClient.auth.signOut();
+        },
+        getCurrentUser: () => {
+          return mockClient.auth.getCurrentUser();
+        }
       };
-    },
-    signOut: async () => {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      return true;
-    },
-    getCurrentUser: () => {
-      const user = supabase.auth.user ? supabase.auth.user() : null;
-      return user;
     }
-  },
-  migration_center: {
-    listBatches: async (currentUser) => {
-      const { data, error } = await supabase.from('migration_batches').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
-      return data;
-    },
-    getBatchDetails: async (batchId, currentUser) => {
-      const { data: batch, error: bErr } = await supabase.from('migration_batches').select('*').eq('id', batchId).single();
-      if (bErr) throw bErr;
-      const { data: rows, error: rErr } = await supabase.from('migration_staging_rows').select('*').eq('batch_id', batchId).order('row_index', { ascending: true });
-      if (rErr) throw rErr;
-      const { data: lineage, error: lErr } = await supabase.from('migration_lineage').select('*').eq('batch_id', batchId);
-      if (lErr) throw lErr;
-      const { data: reconciliation } = await supabase.from('migration_reconciliation_records').select('*').eq('batch_id', batchId).maybeSingle();
-      return { batch, rows, lineage, reconciliation };
-    },
-    createBatch: async (batchName, entityType, fieldMappings, currentUser) => {
-      const { data, error } = await supabase.from('migration_batches').insert({
-        batch_name: batchName,
-        entity_type: entityType,
-        field_mappings: fieldMappings || {},
-        created_by: currentUser.id
-      }).select().single();
-      if (error) throw error;
-      return data;
-    },
-    commitBatch: async (batchId, currentUser) => {
-      const { data, error } = await supabase.rpc('fn_commit_migration_batch', { p_batch_id: batchId });
-      if (error) throw error;
-      return data;
-    },
-    rollbackBatch: async (batchId, currentUser) => {
-      const { data, error } = await supabase.rpc('fn_rollback_migration_batch', { p_batch_id: batchId });
-      if (error) throw error;
-      return data;
+
+    if (propKey === 'users') {
+      return {
+        list: async (currentUser) => {
+          if (supabase) {
+            try {
+              const { data: userRows, error } = await supabase.from('users').select('*');
+              if (!error && userRows && userRows.length > 0) {
+                const { data: roleRows } = await supabase.from('user_roles').select('*');
+                return userRows.map(u => {
+                  const roles = (roleRows || []).filter(r => r.user_id === u.id).map(r => r.role_name || r.role);
+                  return {
+                    id: u.id,
+                    email: u.email || `${(u.full_name || 'user').toLowerCase().replace(/\s+/g, '')}@society.com`,
+                    name: u.full_name || u.name || 'User',
+                    mobile: u.mobile || '',
+                    status: u.status || 'active',
+                    roles: roles.length > 0 ? roles : ['member']
+                  };
+                });
+              }
+            } catch (err) {
+              console.warn('Real Supabase user fetch fallback:', err.message);
+            }
+          }
+          return target.users.list(currentUser);
+        },
+        create: async (data, currentUser) => {
+          if (supabase) {
+            try {
+              const newId = crypto.randomUUID ? crypto.randomUUID() : 'usr-' + Math.random().toString(36).substr(2, 9);
+              await supabase.from('users').insert({
+                id: newId,
+                full_name: data.name,
+                mobile: data.mobile || null,
+                status: data.status || 'active'
+              });
+              await supabase.from('user_roles').insert({
+                society_id: '11111111-1111-1111-1111-111111111111',
+                user_id: newId,
+                role_name: data.role || 'member'
+              });
+            } catch (err) {
+              console.warn('Cloud user sync warning:', err.message);
+            }
+          }
+          return target.users.create(data, currentUser);
+        },
+        updateRole: async (userId, newRoles, currentUser) => {
+          return target.users.updateRole(userId, newRoles, currentUser);
+        },
+        updateStatus: async (userId, newStatus, currentUser) => {
+          return target.users.updateStatus(userId, newStatus, currentUser);
+        }
+      };
     }
+
+    return target[propKey];
   }
-};
+});

@@ -1,0 +1,21 @@
+{
+  "target_path": "D:\\Clients Applications\\SU Society App\\SLICE20_REVISION_4.34_FORENSIC_FINAL_PLAN.md",
+  "byte_count": 24928,
+  "physical_line_count": 424,
+  "encoding": "UTF-8",
+  "line_endings": "LF",
+  "sha256": "D3B04D2978BBD0E25A53E60601F07ABB6605192C01EB8DA63667C75E6B778C7D",
+  "verifier_a_exit_code": 0,
+  "verifier_b_exit_code": 0,
+  "positive_control_status": "PASS",
+  "math_status": "PASS",
+  "format_status": "PASS",
+  "fence_status": "PASS",
+  "assertion_count": 71,
+  "gate_count": 15,
+  "noc_state_count": 11,
+  "pass_state_count": 5,
+  "prohibited_state_count": 0,
+  "token_contract_status": "PASS",
+  "final_status": "PASS"
+}

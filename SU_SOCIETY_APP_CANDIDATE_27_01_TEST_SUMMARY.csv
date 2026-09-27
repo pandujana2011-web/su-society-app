@@ -1,0 +1,52 @@
+TestID,Category,ExecutionMode,Description,Status,Severity,Result
+TC-PROD-01,Smoke,Production Safe (Read-Only),Production URL health & HTTP boot status,PASS,N/A,Healthy 200 OK
+TC-PROD-02,Smoke,Production Safe (Read-Only),Login & Logout page rendering,PASS,N/A,Clean render
+TC-PROD-03,Smoke,Production Safe (Read-Only),Protected route rejection without token,PASS,N/A,Redirect to /login
+TC-PROD-04,Catalog,Production Safe (Read-Only),is_staff routine exists in pg_proc,PASS,N/A,BOOLEAN SQL STABLE DEFINER
+TC-PROD-05,Catalog,Production Safe (Read-Only),log_asset_service and renew_amc callers intact,PASS,N/A,Signatures intact
+TC-PROD-06,Read-Only Data,Production Safe (Read-Only),Existing Assets / Vendors / AMC read paths,PASS,N/A,Zero mutation
+TC-PROD-07,UI/PWA,Production Safe (Read-Only),Responsive layout desktop/tablet/mobile,PASS,N/A,Responsive & clean
+TC-AUTH-01,Auth,Local Backend,Valid authentication token & session,PASS,N/A,Authenticated
+TC-AUTH-02,Auth,Local Backend,Invalid credentials login rejection,PASS,N/A,Denied clean
+TC-AUTH-03,Auth,Local Backend,Session persistence & route protection,PASS,N/A,Protected
+TC-STAFF-01,Authorization,Local Backend,is_staff() returns TRUE for admin,PASS,N/A,TRUE
+TC-STAFF-02,Authorization,Local Backend,is_staff() returns TRUE for technician,PASS,N/A,TRUE
+TC-STAFF-03,Authorization,Local Backend,is_staff() returns TRUE for secretary,PASS,N/A,TRUE
+TC-STAFF-04,Authorization,Local Backend,is_staff() returns TRUE for treasurer,PASS,N/A,TRUE
+TC-STAFF-05,Authorization,Local Backend,is_staff() returns TRUE for executive_member,PASS,N/A,TRUE
+TC-STAFF-06,Authorization,Local Backend,is_staff() returns TRUE for gatekeeper,PASS,N/A,TRUE
+TC-STAFF-07,Authorization,Local Backend,is_staff() returns FALSE for member,PASS,N/A,FALSE
+TC-STAFF-08,Authorization,Local Backend,is_staff() returns FALSE for tenant,PASS,N/A,FALSE
+TC-STAFF-09,Authorization,Local Backend,is_staff() returns FALSE for revoked_on staff,PASS,N/A,FALSE
+TC-STAFF-10,Authorization,Local Backend,is_staff() returns FALSE for suspended user,PASS,N/A,FALSE
+TC-STAFF-11,Authorization,Local Backend,is_staff(NULL) returns FALSE,PASS,N/A,FALSE
+TC-SEC-01,Security,Local Backend,PUBLIC EXECUTE revoked on is_staff,PASS,N/A,Revoked
+TC-SEC-02,Security,Local Backend,authenticated & service_role EXECUTE granted,PASS,N/A,Granted
+TC-SEC-03,Security,Local Backend,is_staff search_path pinned to public pg_temp,PASS,N/A,Pinned
+TC-ASSET-01,Asset,Local Backend,Create valid asset record,PASS,N/A,Success
+TC-ASSET-02,Asset,Local Backend,Duplicate asset code rejection,PASS,N/A,Rejected
+TC-ASSET-03,Asset,Local Backend,Society isolation on assets,PASS,N/A,Isolated
+TC-VENDOR-01,Vendor,Local Backend,Create valid vendor record,PASS,N/A,Success
+TC-VENDOR-02,Vendor,Local Backend,Vendor society scoping,PASS,N/A,Scoped
+TC-AMC-01,AMC,Local Backend,Create valid AMC contract,PASS,N/A,Success
+TC-AMC-02,AMC,Local Backend,renew_amc authorized execution as staff,PASS,N/A,Success
+TC-AMC-03,AMC,Local Backend,renew_amc unauthorized resident attempt,PASS,N/A,Access Denied
+TC-AMC-04,AMC,Local Backend,renew_amc cross-society attempt,PASS,N/A,Cross-society denied
+TC-SVC-01,Maintenance,Local Backend,log_asset_service authorized execution as staff,PASS,N/A,Success
+TC-SVC-02,Maintenance,Local Backend,log_asset_service unauthorized resident attempt,PASS,N/A,Access Denied
+TC-SVC-03,Maintenance,Local Backend,log_asset_service cross-society asset attempt,PASS,N/A,Cross-society denied
+TC-SVC-04,Maintenance,Local Backend,log_asset_service inactive vendor rejection,PASS,N/A,Rejected
+TC-EXP-01,Expense,Local Backend,Expense vendor dropdown society scoping,PASS,N/A,Scoped
+TC-EXP-02,Expense,Local Backend,Vendor ID linkage in expense voucher,PASS,N/A,Linked
+TC-RLS-01,Isolation,Local Backend,Cross-society SELECT isolation,PASS,N/A,Denied / No data
+TC-RLS-02,Isolation,Local Backend,Cross-society INSERT isolation,PASS,N/A,Denied
+TC-RLS-03,Isolation,Local Backend,Cross-society UPDATE isolation,PASS,N/A,Denied
+TC-RLS-04,Isolation,Local Backend,Cross-society DELETE isolation,PASS,N/A,Denied
+TC-IMMUT-01,Immutability,Local Backend,asset_maintenance_logs UPDATE/DELETE prohibited,PASS,N/A,Append-only protected
+TC-IMMUT-02,Immutability,Local Backend,audit_logs UPDATE/DELETE prohibited,PASS,N/A,Immutable protected
+TC-NEG-01,Negative,Local Backend,NULL/Empty parameters handling in RPCs,PASS,N/A,Rejected cleanly
+TC-NEG-02,Negative,Local Backend,Invalid UUID parameter handling,PASS,N/A,Rejected cleanly
+TC-ATOM-01,Atomicity,Local Backend,log_asset_service dual-write transaction rollback on failure,PASS,N/A,Atomic rollback
+TC-CONCUR-01,Concurrency,Local Backend,Concurrent AMC renewal isolation,PASS,N/A,Isolated
+TC-AUDIT-01,Audit,Local Backend,log_asset_service dual-write to audit_logs,PASS,N/A,Recorded
+TC-FIND-01,Security Observation,Local Backend,log_asset_service vendor society check relies on RLS/caller,PASS,Informational,Documented
