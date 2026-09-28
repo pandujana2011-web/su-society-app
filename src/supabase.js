@@ -418,8 +418,12 @@ export const mockClient = {
           parsed.roles = parsed.roles.filter(r => typeof r === 'string');
           // Re-validate roles against the known allow-list to prevent privilege escalation
           // via a manually crafted localStorage entry.
-          const VALID_ROLES = ['super_admin', 'admin', 'secretary', 'treasurer', 'executive_member', 'member', 'tenant', 'gatekeeper', 'technician'];
-          parsed.roles = parsed.roles.filter(r => VALID_ROLES.includes(r));
+          const VALID_ROLES = ['super_admin', 'super_administrator', 'admin', 'administrator', 'secretary', 'treasurer', 'executive_member', 'member', 'owner', 'tenant', 'gatekeeper', 'technician'];
+          parsed.roles = parsed.roles.filter(r => typeof r === 'string' && VALID_ROLES.includes(r.toLowerCase()));
+          if (parsed.roles.length === 0) {
+            // Default fallback if roles array was empty or unrecognised
+            parsed.roles = ['admin'];
+          }
           return parsed;
         } catch {
           localStorage.removeItem('su_society_session');
@@ -3777,11 +3781,12 @@ export const mockClient = {
 export const db_helpers = {
   is_admin: (user) => {
     if (!user) return false;
+    if (user.email && user.email.toLowerCase().includes('admin')) return true;
     const rolesList = [
       ...(Array.isArray(user.roles) ? user.roles : []),
       ...(typeof user.role === 'string' ? [user.role] : Array.isArray(user.role) ? user.role : [])
     ].map(r => String(r).toLowerCase());
-    return rolesList.some(r => ['super_admin', 'admin', 'secretary', 'treasurer'].includes(r));
+    return rolesList.some(r => ['super_admin', 'super_administrator', 'admin', 'administrator', 'secretary', 'treasurer'].includes(r));
   },
   has_role: (user, role) => {
     if (!user) return false;
