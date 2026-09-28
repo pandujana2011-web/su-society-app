@@ -2884,6 +2884,7 @@ function UserRoleAdminView({ user, isSuperAdmin, triggerAlert }) {
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [role, setRole] = useState('member');
+  const [password, setPassword] = useState('password123');
 
   useEffect(() => {
     loadUsers();
@@ -2903,12 +2904,12 @@ function UserRoleAdminView({ user, isSuperAdmin, triggerAlert }) {
     if (!email || !name) return;
     try {
       await db.users.create({
-        email, name, mobile, role, status: 'active'
+        email, name, mobile, role, password: password || 'password123', status: 'active'
       }, user);
 
-      triggerAlert('success', `User account for ${name} registered.`);
+      triggerAlert('success', `User account for ${name} registered with credentials.`);
       setShowAddUser(false);
-      setEmail(''); setName(''); setMobile('');
+      setEmail(''); setName(''); setMobile(''); setPassword('password123');
       loadUsers();
     } catch (err) {
       triggerAlert('danger', err.message);
@@ -2991,12 +2992,19 @@ function UserRoleAdminView({ user, isSuperAdmin, triggerAlert }) {
                   <option value="treasurer">Treasurer (Committee)</option>
                   <option value="executive_member">Executive Committee Member</option>
                   <option value="admin">Administrator</option>
-                  <option value="gatekeeper">Gatekeeper</option>
+                  <option value="gatekeeper">Gatekeeper (Security)</option>
                   <option value="technician">Technician</option>
                 </select>
               </div>
             </div>
-            <button type="submit" className="btn btn-primary btn-small" style={{ marginTop: '1rem' }}>Create Profile</button>
+            <div className="form-group">
+              <label className="form-label">Initial Login Password *</label>
+              <input type="text" className="form-control" placeholder="password123" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <small style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '0.25rem', display: 'block' }}>
+                Default: <code>password123</code>. User can sign in immediately with this credential.
+              </small>
+            </div>
+            <button type="submit" className="btn btn-primary btn-small" style={{ marginTop: '1rem' }}>Create Account &amp; Credentials</button>
           </form>
         </div>
       )}
