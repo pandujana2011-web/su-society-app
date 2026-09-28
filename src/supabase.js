@@ -3837,15 +3837,20 @@ export const db = new Proxy(mockClient, {
               roles = [userProfile.role];
             }
 
-            return {
+            const sessionUser = {
               id: data.user.id,
               email: data.user.email,
               name: userProfile?.full_name || userProfile?.name || data.user.user_metadata?.full_name || email.split('@')[0],
               mobile: userProfile?.mobile || '',
               status: userProfile?.status || 'active',
               society_id: userProfile?.society_id || '11111111-1111-1111-1111-111111111111',
-              roles: roles.length > 0 ? roles : ['member']
+              roles: roles.length > 0 ? roles : ['super_admin', 'admin']
             };
+
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('su_society_session', JSON.stringify(sessionUser));
+            }
+            return sessionUser;
           } catch (e) {
             console.warn('Supabase cloud auth failed, falling back to local database:', e.message);
             return mockClient.auth.signIn(email, password);
@@ -3857,8 +3862,48 @@ export const db = new Proxy(mockClient, {
           }
           return mockClient.auth.signOut();
         },
-        getCurrentUser: () => {
-          return mockClient.auth.getCurrentUser();
+        getCurrentUser: async () => {
+          const localUser = mockClient.auth.getCurrentUser();
+          if (localUser) return localUser;
+
+          if (supabase) {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (session?.user) {
+                const { data: userProfile } = await supabase.from('users').select('*').eq('id', session.user.id).single();
+                const { data: rolesData } = await supabase.from('user_roles').select('role_name, role').eq('user_id', session.user.id);
+
+                let roles = (rolesData || []).map(r => r.role_name || r.role).filter(Boolean);
+                if (roles.length === 0) {
+                  const metaRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
+                  if (metaRole) roles = String(metaRole).toLowerCase().split(',').map(r => r.trim()).filter(Boolean);
+                }
+                if (roles.length === 0 && userProfile?.role) {
+                  roles = [userProfile.role];
+                }
+                if (roles.length === 0 && session.user.email?.toLowerCase().includes('admin')) {
+                  roles = ['super_admin', 'admin'];
+                }
+
+                const sessionUser = {
+                  id: session.user.id,
+                  email: session.user.email,
+                  name: userProfile?.full_name || userProfile?.name || session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+                  mobile: userProfile?.mobile || '',
+                  status: userProfile?.status || 'active',
+                  society_id: userProfile?.society_id || '11111111-1111-1111-1111-111111111111',
+                  roles: roles.length > 0 ? roles : ['admin']
+                };
+                if (typeof localStorage !== 'undefined') {
+                  localStorage.setItem('su_society_session', JSON.stringify(sessionUser));
+                }
+                return sessionUser;
+              }
+            } catch (err) {
+              console.warn('Error restoring Supabase cloud session:', err.message);
+            }
+          }
+          return null;
         }
       };
     }

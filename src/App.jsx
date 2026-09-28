@@ -59,14 +59,16 @@ class ViewErrorBoundary extends React.Component {
 
 function App() {
   const [user, setUser] = useState(null);
+  const [loadingSession, setLoadingSession] = useState(true);
   const [currentView, setCurrentView] = useState(() => getViewFromLocation());
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
   const [alert, setAlert] = useState(null);
 
   const navigateToView = (view, extraState = null) => {
-    setCurrentView(view);
+    const targetView = view || 'dashboard';
+    setCurrentView(targetView);
     setAlert(null);
-    const targetPath = (view === 'dashboard' || !view) ? '/' : `/${view}`;
+    const targetPath = (targetView === 'dashboard') ? '/' : `/${targetView}`;
     if (window.location.pathname !== targetPath) {
       window.history.pushState(extraState, '', targetPath);
     }
@@ -74,17 +76,26 @@ function App() {
 
   // Load user session on mount
   useEffect(() => {
-    const sessionUser = db.auth.getCurrentUser();
-    if (sessionUser) {
-      setUser(sessionUser);
-    }
+    const initSession = async () => {
+      try {
+        const sessionUser = await db.auth.getCurrentUser();
+        if (sessionUser) {
+          setUser(sessionUser);
+        }
+      } catch (err) {
+        console.warn('[Session Restorer] Warning restoring session:', err);
+      } finally {
+        setLoadingSession(false);
+      }
+    };
+    initSession();
   }, []);
 
   // Listen for browser navigation (popstate/hashchange)
   useEffect(() => {
     const handlePopState = () => {
       const view = getViewFromLocation();
-      setCurrentView(view);
+      setCurrentView(view || 'dashboard');
     };
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('hashchange', handlePopState);
@@ -100,7 +111,7 @@ function App() {
       const loggedUser = await db.auth.signIn(email, password);
       setUser(loggedUser);
       const targetView = getViewFromLocation();
-      navigateToView(targetView);
+      navigateToView(targetView || 'dashboard');
     } catch (err) {
       setAlert({ type: 'danger', message: err.message });
     }
@@ -119,6 +130,18 @@ function App() {
     setAlert({ type, message });
     window.scrollTo(0, 0);
   };
+
+  // Render loading screen while auth session is restoring
+  if (loadingSession) {
+    return (
+      <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#0f172a' }}>
+        <div style={{ textAlign: 'center', color: '#fff' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏡</div>
+          <div style={{ fontSize: '1rem', fontWeight: 600, color: '#94a3b8' }}>Restoring Session...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
