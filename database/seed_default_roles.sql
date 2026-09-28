@@ -302,6 +302,24 @@ BEGIN
         ON CONFLICT DO NOTHING;
     END IF;
 
+    -- -------------------------------------------------------------------------
+    -- Synchronize GoTrue auth.identities for all demo accounts
+    -- -------------------------------------------------------------------------
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'auth' AND table_name = 'identities') THEN
+        INSERT INTO auth.identities (
+            id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+        ) VALUES
+            (v_super_admin_id, v_super_admin_id, format('{"sub":"%s","email":"%s"}', v_super_admin_id, 'admin@society.com')::jsonb, 'email', v_super_admin_id::text, NOW(), NOW(), NOW()),
+            (v_secretary_id, v_secretary_id, format('{"sub":"%s","email":"%s"}', v_secretary_id, 'secretary@society.com')::jsonb, 'email', v_secretary_id::text, NOW(), NOW(), NOW()),
+            (v_treasurer_id, v_treasurer_id, format('{"sub":"%s","email":"%s"}', v_treasurer_id, 'treasurer@society.com')::jsonb, 'email', v_treasurer_id::text, NOW(), NOW(), NOW()),
+            (v_owner_id, v_owner_id, format('{"sub":"%s","email":"%s"}', v_owner_id, 'owner@society.com')::jsonb, 'email', v_owner_id::text, NOW(), NOW(), NOW()),
+            (v_tenant_id, v_tenant_id, format('{"sub":"%s","email":"%s"}', v_tenant_id, 'tenant@society.com')::jsonb, 'email', v_tenant_id::text, NOW(), NOW(), NOW()),
+            (v_security_id, v_security_id, format('{"sub":"%s","email":"%s"}', v_security_id, 'security@society.com')::jsonb, 'email', v_security_id::text, NOW(), NOW(), NOW())
+        ON CONFLICT (provider_id, provider) DO UPDATE SET
+            identity_data = EXCLUDED.identity_data,
+            updated_at = NOW();
+    END IF;
+
 END $$;
 
 COMMIT;
