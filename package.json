@@ -2,11 +2,13 @@
   "name": "su-society-app",
   "private": true,
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:demo": "node scripts/seed_demo_accounts.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

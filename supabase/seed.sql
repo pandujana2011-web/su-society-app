@@ -215,6 +215,9 @@ BEGIN
     -- 5. TENANT: tenant@society.com
     -- -------------------------------------------------------------------------
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'auth' AND table_name = 'users') THEN
+        -- Cleanup any conflicting legacy OAuth or duplicate users with non-matching IDs
+        DELETE FROM auth.users WHERE email = 'tenant@society.com' AND id != v_tenant_id;
+
         INSERT INTO auth.users (
             id, instance_id, email, encrypted_password, email_confirmed_at, 
             raw_app_meta_data, raw_user_meta_data, created_at, updated_at, role, aud
@@ -230,6 +233,7 @@ BEGIN
         ) ON CONFLICT (id) DO UPDATE SET
             email = EXCLUDED.email,
             encrypted_password = EXCLUDED.encrypted_password,
+            email_confirmed_at = NOW(),
             raw_user_meta_data = EXCLUDED.raw_user_meta_data;
     END IF;
 
@@ -247,6 +251,17 @@ BEGIN
         VALUES 
             (v_society_id, v_tenant_id, 'tenant')
         ON CONFLICT DO NOTHING;
+    END IF;
+
+    -- Sync tenancies table with matching tenant_id
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'tenancies') THEN
+        UPDATE public.tenancies 
+        SET tenant_id = v_tenant_id 
+        WHERE tenant_id = '47386d94-0000-0000-0000-000000000000'::UUID OR tenant_id IS NULL;
+
+        INSERT INTO public.tenancies (unit_id, tenant_id, start_date, is_active, occupant_count, remarks)
+        SELECT 'u2222222-2222-2222-2222-222222222222'::UUID, v_tenant_id, '2025-06-01'::DATE, TRUE, 3, 'Rented the entire duplex villa'
+        WHERE NOT EXISTS (SELECT 1 FROM public.tenancies WHERE tenant_id = v_tenant_id);
     END IF;
 
     -- -------------------------------------------------------------------------
