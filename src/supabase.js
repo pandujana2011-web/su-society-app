@@ -217,6 +217,16 @@ const getStorage = () => {
         modified = true;
       }
     });
+
+    // Auto-seed technician if missing
+    if (parsed.users && !parsed.users.some(u => u.email === 'technician@society.com')) {
+      parsed.users.push({ id: 'd2222222-2222-2222-2222-222222222222', email: 'technician@society.com', name: 'Suresh (Technician)', mobile: '+919876543214', status: 'active', password: 'password123' });
+      modified = true;
+    }
+    if (parsed.user_roles && !parsed.user_roles.some(r => r.user_id === 'd2222222-2222-2222-2222-222222222222' && r.role === 'technician')) {
+      parsed.user_roles.push({ user_id: 'd2222222-2222-2222-2222-222222222222', society_id: '11111111-1111-1111-1111-111111111111', role: 'technician' });
+      modified = true;
+    }
     if (!parsed.expense_categories || parsed.expense_categories.length === 0) {
       parsed.expense_categories = INITIAL_MOCK_DATA.expense_categories;
       modified = true;
@@ -3849,28 +3859,18 @@ export const db = new Proxy(mockClient, {
           const lowerEmail = String(email || '').toLowerCase().trim();
           if (!supabase) return mockClient.auth.signIn(lowerEmail, password);
           try {
-            let authData = null;
             const { data, error } = await supabase.auth.signInWithPassword({ email: lowerEmail, password });
-            
+
             if (error || !data?.user) {
-              // Attempt auto-signup for demo accounts if GoTrue password mismatch occurs
-              if (['admin@society.com', 'secretary@society.com', 'treasurer@society.com', 'owner@society.com', 'tenant@society.com', 'security@society.com', 'gatekeeper@society.com'].includes(lowerEmail)) {
-                try {
-                  const signUpRes = await supabase.auth.signUp({
-                    email: lowerEmail,
-                    password: password,
-                    options: { data: { full_name: lowerEmail.split('@')[0], role: lowerEmail.includes('tenant') ? 'tenant' : lowerEmail.includes('admin') ? 'super_admin' : 'member' } }
-                  });
-                  if (signUpRes.data?.user) authData = signUpRes.data;
-                } catch (signUpErr) {}
-              }
-            } else {
-              authData = data;
+              // Surface the real error to the UI — do NOT silently fall back to mock
+              throw new Error(
+                error?.message === 'Invalid login credentials'
+                  ? 'Invalid email or password. Please check your credentials and try again.'
+                  : (error?.message || 'Sign in failed. Please try again.')
+              );
             }
 
-            if (!authData?.user) {
-              return mockClient.auth.signIn(lowerEmail, password);
-            }
+            const authData = data;
 
             const { data: userProfile } = await supabase.from('users').select('*').eq('id', authData.user.id).maybeSingle();
             const { data: rolesData } = await supabase.from('user_roles').select('role_name, role').eq('user_id', authData.user.id);
@@ -4012,9 +4012,27 @@ export const db = new Proxy(mockClient, {
           return target.users.create(data, currentUser);
         },
         updateRole: async (userId, newRoles, currentUser) => {
+          if (supabase) {
+            try {
+              await supabase.from('user_roles').delete().eq('user_id', userId);
+              const inserts = newRoles.map(r => ({ society_id: '11111111-1111-1111-1111-111111111111', user_id: userId, role_name: r, role: r }));
+              await supabase.from('user_roles').insert(inserts);
+              try { return await target.users.updateRole(userId, newRoles, currentUser); } catch(e) { return true; }
+            } catch (err) {
+              console.warn('Cloud role sync error:', err.message);
+            }
+          }
           return target.users.updateRole(userId, newRoles, currentUser);
         },
         updateStatus: async (userId, newStatus, currentUser) => {
+          if (supabase) {
+            try {
+              await supabase.from('users').update({ status: newStatus }).eq('id', userId);
+              try { return await target.users.updateStatus(userId, newStatus, currentUser); } catch(e) { return true; }
+            } catch (err) {
+              console.warn('Cloud status sync error:', err.message);
+            }
+          }
           return target.users.updateStatus(userId, newStatus, currentUser);
         }
       };

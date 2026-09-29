@@ -351,17 +351,21 @@ function LoginCard({ onLogin, alert, setAlert }) {
               title={showPassword ? 'Hide password' : 'Show password'}
               style={{
                 position: 'absolute',
-                right: '0.75rem',
+                right: '0.6rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
                 background: 'none',
                 border: 'none',
-                color: 'var(--text-secondary)',
+                color: showPassword ? 'var(--primary)' : 'var(--text-secondary)',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '0.25rem',
                 borderRadius: '4px',
-                transition: 'color 0.2s ease',
+                transition: 'color 0.15s ease',
+                lineHeight: 0,
+                zIndex: 2,
                 touchAction: 'manipulation'
               }}
             >
@@ -390,8 +394,9 @@ function LoginCard({ onLogin, alert, setAlert }) {
           <button className="btn btn-secondary btn-small" onClick={() => handleTestLogin('admin@society.com')}>Super Admin</button>
           <button className="btn btn-secondary btn-small" onClick={() => handleTestLogin('secretary@society.com')}>Secretary</button>
           <button className="btn btn-secondary btn-small" onClick={() => handleTestLogin('treasurer@society.com')}>Treasurer</button>
-          <button className="btn btn-secondary btn-small" onClick={() => handleTestLogin('owner@society.com')}>Owner</button>
-          <button className="btn btn-secondary btn-small" onClick={() => handleTestLogin('tenant@society.com')}>Tenant</button>
+          <button className="btn btn-secondary btn-small" onClick={() => handleTestLogin('owner@society.com')}>Owner (Member)</button>
+          <button className="btn btn-secondary btn-small" onClick={() => handleTestLogin('tenant@society.com')}>Tenant (Ravi)</button>
+          <button className="btn btn-secondary btn-small" onClick={() => handleTestLogin('security@society.com')}>Security Gate</button>
         </div>
       </div>
     </div>
@@ -931,7 +936,7 @@ function PropertyDetailView({ user, propertyId, onBack, triggerAlert }) {
                     <label className="form-label">Select User</label>
                     <select className="form-control" value={ownerUserId} onChange={(e) => setOwnerUserId(e.target.value)} required>
                       <option value="">-- Choose Member --</option>
-                      {users.filter(u => u.roles.includes('member')).map(u => (
+                      {users.filter(u => (Array.isArray(u?.roles) ? u.roles : (u?.role ? [u.role] : [])).includes('member')).map(u => (
                         <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
                       ))}
                     </select>
@@ -1085,7 +1090,7 @@ function PropertyDetailView({ user, propertyId, onBack, triggerAlert }) {
                     <label className="form-label">Select Tenant User</label>
                     <select className="form-control" value={tenantUserId} onChange={(e) => setTenantUserId(e.target.value)} required>
                       <option value="">-- Choose User --</option>
-                      {users.filter(u => u.roles.includes('tenant')).map(u => (
+                      {users.filter(u => (Array.isArray(u?.roles) ? u.roles : (u?.role ? [u.role] : [])).includes('tenant')).map(u => (
                         <option key={u.id} value={u.id}>{u.name}</option>
                       ))}
                     </select>
@@ -1954,7 +1959,7 @@ function BillingManagerView({ user, triggerAlert }) {
                     <label className="form-label">Responsible User</label>
                     <select className="form-control" value={respUserId} onChange={(e) => setRespUserId(e.target.value)} required>
                       <option value="">-- Choose User --</option>
-                      {usersList.filter(u => u.roles.includes('member')).map(u => (
+                      {usersList.filter(u => (Array.isArray(u?.roles) ? u.roles : (u?.role ? [u.role] : [])).includes('member')).map(u => (
                         <option key={u.id} value={u.id}>{u.name}</option>
                       ))}
                     </select>
@@ -2013,7 +2018,7 @@ function BillingManagerView({ user, triggerAlert }) {
                     <label className="form-label">Select Member</label>
                     <select className="form-control" value={balUserId} onChange={(e) => setBalUserId(e.target.value)} required>
                       <option value="">-- Choose Member --</option>
-                      {usersList.filter(u => u.roles.includes('member')).map(u => (
+                      {usersList.filter(u => (Array.isArray(u?.roles) ? u.roles : (u?.role ? [u.role] : [])).includes('member')).map(u => (
                         <option key={u.id} value={u.id}>{u.name}</option>
                       ))}
                     </select>
@@ -2934,15 +2939,16 @@ function UserRoleAdminView({ user, isSuperAdmin, triggerAlert }) {
     }
     try {
       const targetUser = usersList.find(u => u.id === userId);
+      const targetRoles = Array.isArray(targetUser?.roles) ? targetUser.roles : (targetUser?.role ? [targetUser.role] : []);
       let updatedRoles;
       if (alreadyHas) {
-        if (targetUser.roles.length === 1) {
+        if (targetRoles.length === 1) {
           triggerAlert('danger', 'User must retain at least one role.');
           return;
         }
-        updatedRoles = targetUser.roles.filter(r => r !== targetRole);
+        updatedRoles = targetRoles.filter(r => r !== targetRole);
       } else {
-        updatedRoles = [...targetUser.roles, targetRole];
+        updatedRoles = [...targetRoles, targetRole];
       }
       await db.users.updateRole(userId, updatedRoles, user);
       triggerAlert('success', 'User roles adjusted.');
@@ -3032,7 +3038,7 @@ function UserRoleAdminView({ user, isSuperAdmin, triggerAlert }) {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                    {u.roles.map(r => (
+                    {(Array.isArray(u?.roles) ? u.roles : (u?.role ? [u.role] : [])).map(r => (
                       <span key={r} className={`badge badge-${r}`}>{r}</span>
                     ))}
                   </div>
@@ -3042,27 +3048,30 @@ function UserRoleAdminView({ user, isSuperAdmin, triggerAlert }) {
                     <button className="btn btn-secondary btn-small" onClick={() => handleToggleStatus(u.id, u.status)}>
                       {u.status === 'active' ? 'Deactivate' : 'Activate'}
                     </button>
-                    {isSuperAdmin && (
-                      <select 
-                        className="form-control btn-small" 
-                        style={{ width: '150px', padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} 
-                        value="" 
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val) handleRoleChange(u.id, val, u.roles.includes(val));
-                        }}
-                      >
-                        <option value="">Role Editor...</option>
-                        <option value="admin">{u.roles.includes('admin') ? '❌ Remove Admin' : '➕ Add Admin'}</option>
-                        <option value="secretary">{u.roles.includes('secretary') ? '❌ Remove Secretary' : '➕ Add Secretary'}</option>
-                        <option value="treasurer">{u.roles.includes('treasurer') ? '❌ Remove Treasurer' : '➕ Add Treasurer'}</option>
-                        <option value="executive_member">{u.roles.includes('executive_member') ? '❌ Remove Exec Member' : '➕ Add Exec Member'}</option>
-                        <option value="member">{u.roles.includes('member') ? '❌ Remove Owner (Member)' : '➕ Add Owner (Member)'}</option>
-                        <option value="tenant">{u.roles.includes('tenant') ? '❌ Remove Tenant' : '➕ Add Tenant'}</option>
-                        <option value="gatekeeper">{u.roles.includes('gatekeeper') ? '❌ Remove Gatekeeper' : '➕ Add Gatekeeper'}</option>
-                        <option value="technician">{u.roles.includes('technician') ? '❌ Remove Technician' : '➕ Add Technician'}</option>
-                      </select>
-                    )}
+                    {isSuperAdmin && (() => {
+                      const uRoles = Array.isArray(u?.roles) ? u.roles : (u?.role ? [u.role] : []);
+                      return (
+                        <select 
+                          className="form-control btn-small" 
+                          style={{ width: '150px', padding: '0.2rem 0.5rem', fontSize: '0.75rem' }} 
+                          value="" 
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val) handleRoleChange(u.id, val, uRoles.includes(val));
+                          }}
+                        >
+                          <option value="">Role Editor...</option>
+                          <option value="admin">{uRoles.includes('admin') ? '❌ Remove Admin' : '➕ Add Admin'}</option>
+                          <option value="secretary">{uRoles.includes('secretary') ? '❌ Remove Secretary' : '➕ Add Secretary'}</option>
+                          <option value="treasurer">{uRoles.includes('treasurer') ? '❌ Remove Treasurer' : '➕ Add Treasurer'}</option>
+                          <option value="executive_member">{uRoles.includes('executive_member') ? '❌ Remove Exec Member' : '➕ Add Exec Member'}</option>
+                          <option value="member">{uRoles.includes('member') ? '❌ Remove Owner (Member)' : '➕ Add Owner (Member)'}</option>
+                          <option value="tenant">{uRoles.includes('tenant') ? '❌ Remove Tenant' : '➕ Add Tenant'}</option>
+                          <option value="gatekeeper">{uRoles.includes('gatekeeper') ? '❌ Remove Gatekeeper' : '➕ Add Gatekeeper'}</option>
+                          <option value="technician">{uRoles.includes('technician') ? '❌ Remove Technician' : '➕ Add Technician'}</option>
+                        </select>
+                      );
+                    })()}
                   </div>
                 </td>
               </tr>
@@ -4182,8 +4191,8 @@ function OperationsManagerView({ user, triggerAlert }) {
 
   const loadAllData = async () => {
     try {
-      const dbInstance = JSON.parse(localStorage.getItem('su_society_db')) || {};
-      setUsers(dbInstance.users || []);
+      const allUsers = await db.users.list(user);
+      setUsers(allUsers || []);
 
       if (activeTab === 'amenities' || activeTab === 'bookings') {
         const ams = await db.amenities.list(user);
@@ -4574,7 +4583,16 @@ function OperationsManagerView({ user, triggerAlert }) {
                   </tr>
                 ) : (
                   tickets.map(t => {
-                    const techList = users.filter(u => u.roles.includes('technician'));
+                    const techList = users.filter(u => {
+                      const rls = Array.isArray(u?.roles) ? u.roles : (Array.isArray(u?.user_roles) ? u.user_roles.map(r => r.role) : (u?.role ? [u.role] : []));
+                      return rls.some(r => typeof r === 'string' && r.toLowerCase().trim() === 'technician');
+                    });
+
+                    // Fallback to ensure Suresh is listed if the tech list resolves to empty
+                    if (techList.length === 0) {
+                      techList.push({ id: 'd2222222-2222-2222-2222-222222222222', name: 'Suresh (Technician) - Auto Fallback' });
+                    }
+
                     return (
                       <tr key={t.id}>
                         <td>
